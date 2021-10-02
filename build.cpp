@@ -119,7 +119,7 @@ compile_settings parse_args( int argc, const char* argv[] ) {
 
         if ( !found_name ) {
             if ( s.find( "web" ) != string::npos ) { output.use_web     = true; }
-            if ( s.find( "opt" ) != string::npos ) { output.optimized = true; }
+            if ( s.find( "opt" ) != string::npos ) { output.optimized   = true; }
         }
     }
     return output;
