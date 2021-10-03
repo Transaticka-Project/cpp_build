@@ -8,10 +8,17 @@
 using namespace std;
 
 /* CONFIG BEGIN */
-string default_compiler     = "clang"; // can be changed to gcc
-string cppversion           = "-std=c++14";
+string default_compiler     = "gcc"; // can be changed to gcc
+string cppversion           = "-std=c++17"; // changed from 14 to 17 
 
 vector< string > default_flags = {
+#if defined( _WIN32 ) 
+    "-I.\\include\\",
+    "-I.\\src\\",
+#else
+    "-I./include/",
+    "-I./src/",
+#endif
     "-lstdc++",
     "-fno-signed-zeros",
     "-mrecip=all",
@@ -39,7 +46,7 @@ vector< string > debug_flags = {
     "-g3",
     "-Wall",
     "-Wextra",
-    "-Werror",
+    //"-Werror",
     "-Wpedantic",
 #if !defined(_WIN32)
     "-fsanitize=thread",
@@ -86,9 +93,22 @@ string run_cmd( const string& cmd ) {
 
 string include_sdl2() {
 #if defined( _WIN32 )
-    return "-L.\\lib\\sdl2win64 -I.\\include\\ -lSDL2main -lSDL2";
+    return "-L.\\lib\\sdl2win64 -lSDL2main -lSDL2";
 #else
-    return run_cmd( "sdl2-config --cflags --static-libs" );
+    string static_libs = run_cmd( "sdl2-config --static-libs" );
+    string cflags = run_cmd( "sdl2-config --cflags" );
+    static_libs.pop_back();
+    cflags.pop_back();
+    return static_libs + ' ' + cflags;
+#endif
+}
+
+string include_enet() {
+#if !defined( _WIN32 )
+    return "./lib/linux/libenet.a";
+#else
+    #error "ENET is not included for _WIN32"
+    return "-L.\\lib\\enet";
 #endif
 }
 
@@ -130,7 +150,7 @@ int main( int argc, const char* argv[] ) {
 
     string cmd = ( settings.use_web ? string( "emcc" ) : default_compiler ) + ' ' + settings.source_file + ' ';
 
-    cmd += ' ' + include_sdl2() + ' ';
+    cmd += ' ' + include_sdl2() + ' ' + include_enet() + ' ';
 
     append_flags( &cmd, default_flags );
 
@@ -150,11 +170,11 @@ int main( int argc, const char* argv[] ) {
     else { exe_name += ".exe"; }
 #endif
 
-    cmd += "-o " + exe_name + " && ";
-#if !defined( _WIN32 )
-    cmd += "./";
-#endif
-    cmd += exe_name;
+    cmd += "-o " + exe_name; // + " && ";
+//#if !defined( _WIN32 )
+//    cmd += "./";
+//#endif
+//    cmd += exe_name;
 
     cout << cmd << endl; 
     return system( cmd.c_str() );
